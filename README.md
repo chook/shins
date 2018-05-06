@@ -24,7 +24,10 @@ Version numbers of Shins aim to track the version of Slate they are compatible w
 	* `node shins.js --customcss` or
 	* `node shins.js --inline` or
     * `node shins.js --unsafe`
-* To check locally: `node arapaho` and browse to [localhost:4567](http://localhost:4567) - changes to your source `.html.md` files will automatically be picked up and re-rendered
+* To add custom logo add `--logo` option with path to your logo image.
+* To specify a different output filename from the default `./index.html`, use the `--output` or `-o` option.
+* To allow css-style attributes in markdown, specify the `--attr` option.
+* To check locally: `node arapaho` and browse to [localhost:4567](http://localhost:4567) - changes to your source `.html.md` files and the `source/includes` directory will automatically be picked up and re-rendered. If you use `--launch` or `-l` your default browser will be opened automatically
 * Add, commit and push
 * Then (in your fork) press this button
 
@@ -34,6 +37,18 @@ Or, to deploy to GitHub Pages:
 
 * Change the setting on your fork so Github Pages are served from the root directory
 * Browse to `https://{yourname}.github.io/{repository-name}`
+
+To deploy to your own web-server:
+
+If you use the option `--minify` to shins, the only things you need to take to your web host is the generated `index.html` and the contents of the `pub` directory, which should be kept relative to it, so the structure is always:
+
+```
+{whatever}/index.html
+{whatever}/pub/css/
+{whatever}/pub/js/
+```
+
+If you use the `--inline` option to shins, then everything is bundled into the `index.html` file and no `pub` directory is required. Fonts are by default loaded from this github repository, but this can be overridden with the `--fonturl` option.
 
 ### API
 
@@ -60,6 +75,7 @@ options.customCss = false;
 options.inline = false;
 options.unsafe = false; // setting to true turns off markdown sanitisation
 //options.source = filename; // used to resolve relative paths for included files
+options.logo = './my-custom-logo.png'
 shins.render(markdownString, options)
 .then(html => {
   // ...
@@ -71,6 +87,8 @@ The `err` parameter is the result of the `ejs` rendering step.
 Setting `customCss` to `true` will include the `pub/css/screen_overrides.css`,`pub/css/print_overrides.css` and `pub/css/theme_override.css` files, in which you can override any of the default Slate theme, to save you from having to alter the main css files directly. This should make syncing up with future Shins / Slate releases easier.
 
 Setting `inline` to `true` will inline all page resources (except resources referenced via CSS, such as fonts) to output html. This way HTML can be used stand-alone, without needing any other resources. It will also set `minify` to `true`.
+
+Set `logo` path to add your custom logo as absolute path or path relative to process working directory. If `inline` option is on image will be inlined, else it will be copied to `source/images` directory and included via `src` image attribute.
 
 ### Updating from Slate
 
@@ -86,9 +104,9 @@ Setting `inline` to `true` will inline all page resources (except resources refe
 * Static TOC as per Slate v2.0
 * [GitHub emoji shortcuts](https://gist.github.com/rxaviers/7360908) are supported
 * For converting [OpenApi / Swagger](https://github.com/OAI/OpenAPI-Specification) or [AsyncAPI](https://github.com/asyncapi/asyncapi) definitions to Shins or Slate, see [widdershins](http://github.com/mermade/widdershins)
-* If you need a CLI with more control over the options, why not try [make-shins](https://github.com/cazzer/make-shins)
+* `arapaho` has a `--preserve` or `-p` option which will not overwrite your `.html` output file, but still re-render when necessary
 * Shins ships with an alternate theme by TradeGecko which is also under the Apache 2.0 license
-* Shins supports [AsciiDoc](http://asciidoctor.org/docs/asciidoc-syntax-quick-reference/#include-files) `include::filename[]` syntax as well as `!INCLUDE filename` from [markdown-pp](https://github.com/MikeRalphson/markdown-pp-js)
+* Shins additionally supports [AsciiDoc](http://asciidoctor.org/docs/asciidoc-syntax-quick-reference/#include-files) `include::filename[]` syntax as well as `!INCLUDE filename` from [markdown-pp](https://github.com/MikeRalphson/markdown-pp-js) - this is not supported by Slate
 * If you are using Node.js 4, please specify the `--harmony` flag
 
 ### Shins in the wild

@@ -1,15 +1,16 @@
 'use strict';
 
-var fs = require('fs');
-var path = require('path');
-var util = require('util');
+const fs = require('fs');
+const path = require('path');
+const util = require('util');
 
-var maybe = require('call-me-maybe');
+const maybe = require('call-me-maybe');
 
 var hljs = require('highlightjs/highlight.pack.js');
 var hlpath = require.resolve('highlightjs/highlight.pack.js').replace('highlight.pack.js', '');
 
-var emoji = require('markdown-it-emoji');
+const emoji = require('markdown-it-emoji');
+const attrs = require('markdown-it-attrs');
 var md = require('markdown-it')({
     linkify: true, html: true,
     highlight: function (str, lang) {
@@ -26,13 +27,13 @@ var md = require('markdown-it')({
     }
 }).use(require('markdown-it-lazy-headers'));
 md.use(emoji);
-var yaml = require('js-yaml');
-var ejs = require('ejs');
-var uglify = require('uglify-js');
-var cheerio = require('cheerio');
-var sanitizeHtml = require('sanitize-html');
+const yaml = require('js-yaml');
+const ejs = require('ejs');
+const uglify = require('uglify-js');
+const cheerio = require('cheerio');
+const sanitizeHtml = require('sanitize-html');
 
-var globalOptions = {};
+let globalOptions = {};
 
 function javascript_include_tag(include) {
     var includeStr = fs.readFileSync(path.join(__dirname, '/source/javascripts/' + include + '.inc'), 'utf8');
@@ -84,7 +85,8 @@ function stylesheet_link_tag(stylesheet, media) {
             stylePath = path.join(hlpath, '/styles/' + stylesheet + '.css');
         }
         var styleContent = fs.readFileSync(stylePath, "utf8");
-        styleContent = replaceAll(styleContent, "../../source", "source"); //fix font paths
+        styleContent = replaceAll(styleContent, '../../source/fonts/', globalOptions.fonturl||'https://raw.githubusercontent.com/Mermade/shins/master/source/fonts/');
+        styleContent = replaceAll(styleContent, '../../source/', 'source/');
         if (globalOptions.customCss) {
             var overrideFilename = path.join(__dirname, '/pub/css/' + override + '_overrides.css');
             if (fs.existsSync(overrideFilename)) {
@@ -187,6 +189,8 @@ function clean(s) {
 
 function render(inputStr, options, callback) {
 
+    if (options.attr) md.use(attrs);
+
     if (typeof callback === 'undefined') { // for pre-v1.4.0 compatibility
         callback = options;
         options = {};
@@ -283,9 +287,22 @@ function render(inputStr, options, callback) {
             var imageSource = "source/images/" + image;
             if (globalOptions.inline) {
                 var imgContent = fs.readFileSync(path.join(__dirname, imageSource));
-                imageSource = "data:image/png;base64,"+new Buffer(imgContent).toString('base64');
+                imageSource = "data:image/png;base64," + Buffer.from(imgContent).toString('base64');
             }
             return '<img src="'+imageSource+'" class="' + className + '" alt="' + altText + '">';
+        };
+        locals.logo_image_tag = function () {
+            if (!globalOptions.logo) return locals.image_tag('logo.png', 'Logo', 'logo');
+            var imageSource = path.resolve(process.cwd(), globalOptions.logo);
+            var imgContent = fs.readFileSync(imageSource);
+            if (globalOptions.inline) {
+                imageSource = "data:image/png;base64," + Buffer.from(imgContent).toString('base64');
+            } else {
+                var logoPath = "source/images/custom_logo" + path.extname(imageSource);
+                fs.writeFileSync(path.join(__dirname, logoPath), imgContent);
+                imageSource = logoPath;
+            }
+            return '<img src="' + imageSource + '" class="logo" alt="Logo">';
         };
         locals.stylesheet_link_tag = stylesheet_link_tag;
         locals.javascript_include_tag = javascript_include_tag;
